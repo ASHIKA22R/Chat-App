@@ -59,9 +59,10 @@ export const authStore = create((set, get) => ({
 
   connectSocket: () => {
     const { loggedUser } = get();
-    const socket = io("http://localhost:5000", {
-      query: { userId: loggedUser._id },
-    });
+  const socket = io("https://chat-app-04ig.onrender.com", {
+  query: { userId: loggedUser._id },
+  withCredentials: true,
+});
     socket.connect();
     set({ socket: socket });
     socket.on("getOnlineUsers", (userIds) => {
