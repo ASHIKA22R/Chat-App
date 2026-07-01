@@ -9,20 +9,15 @@ dotenv.config();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-   origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: ["http://localhost:5173", "https://chat-app-httpashika.vercel.app"],
+  credentials: true
+}));
 
 const port = process.env.PORT;
 
 import authRoute from "./routes/authRoute.js";
 import messageRoute from "./routes/messageRoute.js";
-app.get("/", (req, res) => {
-  res.send("Backend is running");
-});
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
