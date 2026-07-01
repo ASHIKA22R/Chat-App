@@ -6,64 +6,73 @@ import { getReceiverSocketId, io } from "../lib/socket.js";
 export const contactsForSidebar = async (req, res) => {
   try {
     const loggedUserId = req.user._id;
-    const users = await Users.find({ _id: { $ne: loggedUserId } }).select(
-      "-password"
-    );
-    if (users) {
-      res.status(200).json(users);
-    }
+
+    const users = await Users.find({
+      _id: { $ne: loggedUserId },
+    }).select("-password");
+
+    return res.status(200).json(users);
   } catch (error) {
-    console.log("error in contactsForSidebar", error.message);
-    res.status(500).json({ message: "Internal Server Error." });
+    console.error("Error in contactsForSidebar:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };
 
 export const getMessages = async (req, res) => {
-  const receiverId = req.params._id;
-  const senderId = req.user._id;
   try {
+    const { _id: receiverId } = req.params;
+    const senderId = req.user._id;
+
     const messages = await Messages.find({
       $or: [
-        { senderId: senderId, receiverId: receiverId },
+        { senderId, receiverId },
         { senderId: receiverId, receiverId: senderId },
       ],
     });
-    res.status(200).json(messages);
+
+    return res.status(200).json(messages);
   } catch (error) {
-    console.log("error in getMessages Controller.", error.message);
-    res.status(400).json({ message: "invalid user Id format." });
+    console.error("Error in getMessages:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };
 
 export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
+
     const senderId = req.user._id;
     const receiverId = req.params._id;
 
-    let imageUrl;
+    let imageUrl = "";
+
     if (image) {
-      const uploadImage = await cloudinary.uploader.upload(image);
-      imageUrl = uploadImage.secure_url;
+      const uploadResponse = await cloudinary.uploader.upload(image);
+      imageUrl = uploadResponse.secure_url;
     }
-    const newMessage = new Messages({
+
+    const newMessage = await Messages.create({
       senderId,
       receiverId,
       text,
       image: imageUrl,
     });
-    await newMessage.save();
 
     const receiverSocketId = getReceiverSocketId(receiverId);
+
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
-    if (newMessage) {
-      res.status(201).json(newMessage);
-    }
+    return res.status(201).json(newMessage);
   } catch (error) {
-    console.log("error in sendMessage Controller", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in sendMessage:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };
