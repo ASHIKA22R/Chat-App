@@ -61,7 +61,6 @@ export const authStore = create((set, get) => ({
     const { loggedUser } = get();
   const socket = io("https://chat-app-04ig.onrender.com", {
   query: { userId: loggedUser._id },
-  withCredentials: true,
 });
     socket.connect();
     set({ socket: socket });
